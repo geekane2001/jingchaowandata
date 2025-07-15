@@ -1,0 +1,8 @@
+__pycache__
+*.pyc
+.venv
+venv
+.git
+.gitignore
+dashboard_screenshot.png
+debug_screenshot.png```
