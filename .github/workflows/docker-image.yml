@@ -1,0 +1,39 @@
+# 工作流的名称
+name: Docker Image CI
+
+# 触发条件：当有代码推送到 main 分支时触发
+on:
+  push:
+    branches: [ "main" ]
+
+# 工作流包含的任务
+jobs:
+  # 任务的ID，可以自定义
+  build_and_push:
+    # 任务运行的环境
+    runs-on: ubuntu-latest
+
+    # 任务的步骤
+    steps:
+      # 步骤1: 检出（下载）你的代码到虚拟服务器
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 步骤2: 登录到 Docker Hub
+      # 使用我们之前在GitHub Secrets中设置的用户名和令牌
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 步骤3: 构建并推送 Docker 镜像
+      # 这个步骤会自动寻找你项目中的 Dockerfile
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          # 推送镜像到 Docker Hub
+          push: true
+          # 给镜像打上标签，格式为：你的用户名/仓库名:latest
+          # 这里要确保DOCKERHUB_USERNAME被正确设置
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
