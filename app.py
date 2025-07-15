@@ -67,6 +67,7 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
 async def run_playwright_scraper():
     if not os.path.exists(COOKIE_FILE):
         app_state["status"] = f"错误: Cookie 文件 '{COOKIE_FILE}' 未找到。"
+        logging.error(app_state["status"])
         return
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -76,32 +77,66 @@ async def run_playwright_scraper():
                 await context.add_cookies(json.load(f)['cookies'])
         except Exception as e:
             app_state["status"] = f"加载 Cookie 失败: {e}"
+            logging.error(app_state["status"])
             await browser.close()
             return
+            
         page = await context.new_page()
         try:
-            await page.goto(TARGET_URL, wait_until="networkidle", timeout=60000)
+            # 首次加载页面
+            logging.info(f"正在导航到: {TARGET_URL}")
+            await page.goto(TARGET_URL, wait_until="load", timeout=60000)
+            logging.info("页面首次加载完成。")
+
             while True:
                 logging.info("开始新一轮数据刷新...")
-                await page.reload(wait_until="networkidle", timeout=30000)
+                
+                # --- START: 核心修改区域 ---
+                
+                # 步骤 1: 重新加载页面，但使用 'load' 替代 'networkidle'
+                # 'load' 事件在页面主要资源加载后即触发，不会被实时数据请求阻塞
+                await page.reload(wait_until="load", timeout=30000)
+                logging.info("页面已重新加载。")
+
+                # 步骤 2: 等待一个关键的数据元素出现，这标志着仪表盘已渲染
+                # 我们选择等待包含“成交金额”文本的元素，这是一个可靠的指标
+                # 你需要用浏览器的开发者工具检查目标页面，找到一个最合适的选择器
+                key_element_selector = "div:has-text('成交金额')"
+                logging.info(f"正在等待关键元素 '{key_element_selector}' 出现...")
+                await page.wait_for_selector(key_element_selector, timeout=30000)
+                logging.info("关键元素已找到，数据已渲染。")
+
+                # 步骤 3 (可选，但推荐): 添加一个短暂的固定延时，以确保动画或最终渲染完成
+                await asyncio.sleep(2) # 等待2秒
+                
+                # --- END: 核心修改区域 ---
+
+                logging.info("正在截取屏幕...")
                 await page.screenshot(path=SCREENSHOT_PATH, full_page=True)
+                
                 image_base64 = encode_image_to_base64(SCREENSHOT_PATH)
                 if image_base64:
+                    logging.info("截图成功，正在发送给AI进行分析...")
                     analysis_result = await analyze_image_with_vlm(image_base64)
                     if analysis_result:
                         app_state["latest_data"] = analysis_result
                         app_state["status"] = f"数据已更新。下一次刷新在 {REFRESH_INTERVAL_SECONDS} 秒后。"
+                        logging.info("AI分析完成，数据已更新。")
                     else:
                         app_state["status"] = "AI分析未能生成有效数据，正在重试..."
+                        logging.warning(app_state["status"])
                 else:
                     app_state["status"] = "创建截图失败，正在重试..."
+                    logging.warning(app_state["status"])
+                    
+                logging.info(f"等待 {REFRESH_INTERVAL_SECONDS} 秒后进行下一次刷新。")
                 await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
         except Exception as e:
             app_state["status"] = f"主循环发生严重错误: {e}"
             logging.error(f"主循环异常: {e}", exc_info=True)
         finally:
             await browser.close()
-
+            
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     task = asyncio.create_task(run_playwright_scraper())
