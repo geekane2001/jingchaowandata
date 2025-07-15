@@ -1,6 +1,4 @@
-# 1. 使用官方的 Playwright Python 镜像作为基础
-# 这已经包含了所有运行 Chromium 所需的系统依赖，以及一个特定版本的 Python
-FROM mcr.microsoft.com/playwright/python:v1.44.0-jammy
+FROM mcr.microsoft.com/playwright/python:v1.53.0-jammy
 
 # 2. 在容器内部创建一个工作目录
 WORKDIR /app
