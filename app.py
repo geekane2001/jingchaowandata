@@ -16,17 +16,19 @@ from playwright._impl._errors import TimeoutError as PlaywrightTimeoutError
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 
-# --- 路径配置 ---
-TARGET_URL = "https://www.life-data.cn/?channel_id=laike_data_first_menu&groupid=1768205901316096"
+# --- 全局配置 ---
 COOKIE_FILE = '来客.json'
+TARGET_URL = "https://www.life-data.cn/?channel_id=laike_data_first_menu&groupid=1768205901316096"
 SCREENSHOT_PATH = "dashboard_screenshot.png"
-# --- 调试截图路径 ---
-GOTO_SCREENSHOT = "debug_goto.png"
-RELOAD_SCREENSHOT = "debug_reload.png"
-TIMEOUT_SCREENSHOT = "debug_timeout.png"
-
+DEBUG_SCREENSHOT_PATH = "debug_timeout.png"
 REFRESH_INTERVAL_SECONDS = 10
 API_KEY = "bae85abf-09f0-4ea3-9228-1448e58549fc"
+
+# =========================================================
+# === 1. 新增：可配置的强制等待时间（以毫秒为单位） ===
+# 您可以根据需要调整这个值。例如，10000 代表 10 秒。
+# =========================================================
+EXTRA_WAIT_MS = 60000  # 强制等待60秒
 
 client = AsyncOpenAI(base_url='https://api-inference.modelscope.cn/v1/', api_key=API_KEY)
 MODEL_ID = 'Qwen/Qwen2.5-VL-7B-Instruct' 
@@ -63,6 +65,8 @@ async def wait_for_data_to_load(page: Page, timeout: int = 60000):
         logging.error(f"智能等待超时({timeout/1000}s)：关键数据未能加载。")
         return False
 
+# --- 弹窗处理函数已被移除 ---
+
 async def run_playwright_scraper():
     await asyncio.sleep(5) 
     if not os.path.exists(COOKIE_FILE):
@@ -81,20 +85,21 @@ async def run_playwright_scraper():
         
         page = await context.new_page()
         try:
-            # --- 步骤1：初次导航并截图 ---
-            logging.info(f"正在导航至: {TARGET_URL}")
             await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=90000)
-            await page.screenshot(path=GOTO_SCREENSHOT, full_page=True)
-            logging.info(f"首次导航完成，快照已保存至 {GOTO_SCREENSHOT}。")
-
+            
             while True:
                 try:
                     logging.info("开始新一轮数据刷新...")
-                    # --- 步骤2：刷新页面并截图 ---
                     await page.reload(wait_until="domcontentloaded", timeout=90000)
-                    await page.screenshot(path=RELOAD_SCREENSHOT, full_page=True)
-                    logging.info(f"页面刷新完成，快照已保存至 {RELOAD_SCREENSHOT}。")
-
+                    
+                    # =========================================================
+                    # === 2. 核心修改：使用可配置的强制等待时间 ===
+                    # =========================================================
+                    logging.info(f"开始强制等待 {EXTRA_WAIT_MS / 1000} 秒，以等待弹窗和动画完成...")
+                    await asyncio.sleep(EXTRA_WAIT_MS / 1000)
+                    logging.info("强制等待结束。")
+                    
+                    # 强制等待后，再进行智能等待
                     if await wait_for_data_to_load(page):
                         await page.screenshot(path=SCREENSHOT_PATH, full_page=True)
                         image_base64 = encode_image_to_base64(SCREENSHOT_PATH)
@@ -105,35 +110,24 @@ async def run_playwright_scraper():
                             else: app_state["status"] = "AI分析未能从截图中提取有效数据。"
                         else: app_state["status"] = "创建截图失败。"
                     else:
-                        # --- 步骤3：智能等待超时后截图 ---
                         app_state["status"] = "目标页面数据加载超时。"
-                        await page.screenshot(path=TIMEOUT_SCREENSHOT, full_page=True)
-                        logging.info(f"智能等待超时，快照已保存至 {TIMEOUT_SCREENSHOT}。")
+                        await page.screenshot(path=DEBUG_SCREENSHOT_PATH, full_page=True)
 
-                except PlaywrightTimeoutError as e:
-                    # 如果是reload超时，也在这里截图
-                    logging.error(f"页面刷新(reload)超时，正在保存当前快照...")
-                    await page.screenshot(path=TIMEOUT_SCREENSHOT, full_page=True)
-                    app_state["status"] = "目标页面加载超时，正在重试...";
                 except Exception as e:
                     logging.error(f"后台任务循环发生错误: {e}")
-                    app_state["status"] = "后台任务发生错误，正在重试...";
-                    await page.screenshot(path=TIMEOUT_SCREENSHOT, full_page=True)
+                    app_state["status"] = "后台任务发生错误，正在重试..."
+                    await page.screenshot(path=DEBUG_SCREENSHOT_PATH, full_page=True)
                 
                 await asyncio.sleep(REFRESH_INTERVAL_SECONDS)
         
         except PlaywrightTimeoutError as e:
-            # 如果是首次goto超时
-            app_state["status"] = "致命错误: 无法打开目标页面。";
+            app_state["status"] = "致命错误: 无法打开目标页面，请检查Cookie是否有效。"
             logging.error(f"首次导航失败，任务终止: {e}", exc_info=True)
-            # 在goto失败的情况下，页面是空白的，截图意义不大但仍可保留
-            try:
-                await page.screenshot(path=GOTO_SCREENSHOT, full_page=True)
-            except:
-                pass
+            await page.screenshot(path=DEBUG_SCREENSHOT_PATH, full_page=True)
         finally:
             await browser.close()
 
+# ... lifespan 和 FastAPI 应用定义保持不变 ...
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.info("接收到 'lifespan.startup' 事件，正在启动后台抓取任务...")
@@ -146,33 +140,17 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError: logging.info("后台任务已成功取消。")
 
 app = FastAPI(lifespan=lifespan)
-
 @app.get("/data")
 async def get_data():
     if app_state["latest_data"] is None: return {"status": app_state["status"], "data": None}
     return {"status": app_state["status"], "data": app_state["latest_data"]}
-
-# --- 新增的调试路由 ---
-@app.get("/debug_goto")
-async def get_goto_screenshot():
-    if os.path.exists(GOTO_SCREENSHOT): return FileResponse(GOTO_SCREENSHOT)
-    return HTTPException(status_code=404, detail="首次导航快照不存在。")
-
-@app.get("/debug_reload")
-async def get_reload_screenshot():
-    if os.path.exists(RELOAD_SCREENSHOT): return FileResponse(RELOAD_SCREENSHOT)
-    return HTTPException(status_code=404, detail="刷新后快照不存在。")
-
-@app.get("/debug_timeout")
-async def get_timeout_screenshot():
-    if os.path.exists(TIMEOUT_SCREENSHOT): return FileResponse(TIMEOUT_SCREENSHOT)
-    return HTTPException(status_code=404, detail="超时快照不存在。")
+@app.get("/debug_screenshot")
+async def get_debug_screenshot():
+    if os.path.exists(DEBUG_SCREENSHOT_PATH): return FileResponse(DEBUG_SCREENSHOT_PATH)
+    return HTTPException(status_code=404, detail="调试截图不存在。")
 
 app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 if __name__ == "__main__":
-    print("\n" + "="*60)
-    print("      🚀 竞潮玩实时数据看板 (多点快照调试模式) 🚀")
-    print(f"\n      ➡️   http://127.0.0.1:7860")
-    print("="*60 + "\n")
+    print("\n" + "="*60); print("      🚀 竞潮玩实时数据看板 (强制等待版) 🚀"); print(f"\n      ➡️   http://127.0.0.1:7860"); print("="*60 + "\n")
     uvicorn.run(app, host="127.0.0.1", port=7860)
