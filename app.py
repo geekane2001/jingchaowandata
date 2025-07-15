@@ -16,15 +16,19 @@ from playwright._impl._errors import TimeoutError as PlaywrightTimeoutError
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - %(message)s')
 
+# --- 回归文件读取方式 ---
+COOKIE_FILE = '来客.json'
 TARGET_URL = "https://www.life-data.cn/?channel_id=laike_data_first_menu&groupid=1768205901316096"
 SCREENSHOT_PATH = "dashboard_screenshot.png"
 DEBUG_SCREENSHOT_PATH = "debug_screenshot.png"
 REFRESH_INTERVAL_SECONDS = 10
 
-LIFE_DATA_COOKIE_VALUE = os.getenv("LIFE_DATA_COOKIE")
-API_KEY = os.getenv("OPENAI_API_KEY", "bae85abf-09f0-4ea3-9228-1448e58549fc")
+API_KEY = "bae85abf-09f0-4ea3-9228-1448e58549fc" # 硬编码API Key
 
-client = AsyncOpenAI(base_url='https://api-inference.modelscope.cn/v1/', api_key=API_KEY)
+client = AsyncOpenAI(
+    base_url='https://api-inference.modelscope.cn/v1/',
+    api_key=API_KEY,
+)
 MODEL_ID = 'Qwen/Qwen2.5-VL-7B-Instruct' 
 
 app_state = {"latest_data": None, "status": "Initializing..."}
@@ -62,11 +66,10 @@ async def wait_for_data_to_load(page: Page, timeout: int = 60000):
     except PlaywrightTimeoutError: logging.error(f"智能等待超时({timeout/1000}s)：关键数据未能加载。"); return False
 
 async def run_playwright_scraper():
-    # 在任务开始时稍微延迟，确保Web服务完全准备好
     await asyncio.sleep(5) 
     
-    if not LIFE_DATA_COOKIE_VALUE:
-        app_state["status"] = "错误: 未在环境变量中配置 LIFE_DATA_COOKIE。"
+    if not os.path.exists(COOKIE_FILE):
+        app_state["status"] = f"错误: Cookie文件 '{COOKIE_FILE}' 在容器内未找到。"
         logging.error(app_state["status"])
         return
     
@@ -74,11 +77,15 @@ async def run_playwright_scraper():
         browser = await p.chromium.launch(headless=True)
         context = await browser.new_context()
         try:
-            cookie = {"name": "satoken", "value": LIFE_DATA_COOKIE_VALUE, "domain": "www.life-data.cn", "path": "/"}
-            await context.add_cookies([cookie])
-            logging.info("成功通过环境变量设置satoken Cookie。")
+            # --- 核心修改：改回从文件加载Cookie ---
+            with open(COOKIE_FILE, 'r', encoding='utf-8') as f:
+                cookie_data = json.load(f)
+                # 确保我们只传递 'cookies' 列表
+                await context.add_cookies(cookie_data.get('cookies', []))
+            logging.info(f"成功从 {COOKIE_FILE} 加载Cookie。")
         except Exception as e:
-            app_state["status"] = f"设置 Cookie 失败: {e}"; await browser.close(); return
+            app_state["status"] = f"从 {COOKIE_FILE} 加载或设置Cookie失败: {e}"; await browser.close(); return
+
         page = await context.new_page()
         try:
             await page.goto(TARGET_URL, wait_until="domcontentloaded", timeout=90000)
@@ -101,41 +108,27 @@ async def run_playwright_scraper():
             app_state["status"] = "致命错误: 无法打开目标页面，请检查Cookie是否有效。"; logging.error(f"首次导航失败，任务终止: {e}", exc_info=True); await page.screenshot(path=DEBUG_SCREENSHOT_PATH, full_page=True)
         finally: await browser.close()
 
-# =========================================================
-# === 核心修改：移除 lifespan，改用更直接的启动方式 ===
-# =========================================================
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     task = asyncio.create_task(run_playwright_scraper())
-#     yield
-
-app = FastAPI() # 不再需要 lifespan
-
-# API 路由
-@app.get("/data")
-async def get_data():
-    if app_state["latest_data"] is None: return {"status": app_state["status"], "data": None}
-    return {"status": app_state["status"], "data": app_state["latest_data"]}
-
-@app.get("/debug_screenshot")
-async def get_debug_screenshot():
-    if os.path.exists(DEBUG_SCREENSHOT_PATH): return FileResponse(DEBUG_SCREENSHOT_PATH)
-    return HTTPException(status_code=404, detail="调试截图不存在。")
-
-# 静态文件路由
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
-
-
-# 在Web服务启动时，直接创建一个后台任务
 @app.on_event("startup")
 async def startup_event():
     logging.info("接收到 'startup' 事件，正在启动后台抓取任务...")
     asyncio.create_task(run_playwright_scraper())
 
+app = FastAPI()
+
+@app.get("/data")
+async def get_data():
+    if app_state["latest_data"] is None: return {"status": app_state["status"], "data": None}
+    return {"status": app_state["status"], "data": app_state["latest_data"]}
+@app.get("/debug_screenshot")
+async def get_debug_screenshot():
+    if os.path.exists(DEBUG_SCREENSHOT_PATH): return FileResponse(DEBUG_SCREENSHOT_PATH)
+    return HTTPException(status_code=404, detail="调试截图不存在。")
+
+app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("      🚀 竞潮玩实时数据看板 🚀")
+    print("      🚀 竞潮玩实时数据看板 (文件Cookie模式) 🚀")
     print(f"\n      ➡️   http://127.0.0.1:7860")
     print("="*60 + "\n")
     uvicorn.run(app, host="127.0.0.1", port=7860)
