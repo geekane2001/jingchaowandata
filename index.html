@@ -31,75 +31,43 @@
         @keyframes spinReverse { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
         body { font-family: 'Exo 2', 'Noto Sans SC', sans-serif; background-color: var(--bg-color); background-image: radial-gradient(circle at 10% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 20%); background-size: 300px 300px; color: var(--text-primary); margin: 0; padding: 24px; min-height: 100vh; box-sizing: border-box; animation: backgroundFlow 20s linear infinite; overflow-x: hidden; }
         .container { max-width: 1400px; margin: auto; display: flex; flex-direction: column; gap: 32px; }
-        
-        /* ============== START: MOBILE-FIRST REFACTORED CODE ============== */
-
-        /* 默认样式 (移动端竖屏) */
-        .header { 
-            display: flex; 
-            flex-direction: column; /* 默认竖向排列 */
-            text-align: center; /* 默认居中 */
-            gap: 15px; /* 默认间距 */
-            border-bottom: 1px solid var(--border-color); 
-            animation: fadeInUp 0.5s ease-out; 
-            position: relative; 
-            background: var(--header-gradient); 
-            padding: 20px 30px; 
-            border-radius: 16px; 
-            margin-bottom: 10px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
-        }
+        .header { display: flex; flex-direction: column; text-align: center; gap: 15px; border-bottom: 1px solid var(--border-color); animation: fadeInUp 0.5s ease-out; position: relative; background: var(--header-gradient); padding: 20px 30px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
         .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--accent-color), transparent); }
-        .header h1 { 
-            font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; 
-            font-size: 3.5rem; /* 移动端字号 */
-            margin: 0; 
-            font-weight: normal; 
-            background: linear-gradient(90deg, #ffffff, var(--accent-color)); 
-            -webkit-background-clip: text; background-clip: text; color: transparent; 
-            letter-spacing: -1px; 
-            position: relative; 
-            padding-left: 15px; 
-        }
+        .header h1 { font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; font-size: 3.5rem; margin: 0; font-weight: normal; background: linear-gradient(90deg, #ffffff, var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -1px; position: relative; padding-left: 15px; }
         .header h1::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 70%; width: 5px; background: var(--accent-color); border-radius: 10px; }
-        .header .subtitle { 
-            font-size: 0.875rem; 
-            color: var(--text-secondary); 
-            text-align: center; /* 默认居中 */
-            line-height: 1.5; 
-            background: rgba(0, 0, 0, 0.3); 
-            padding: 10px 15px; 
-            border-radius: 8px; 
-            border: 1px solid rgba(255, 255, 255, 0.05); 
-        }
+        .header .subtitle { font-size: 0.875rem; color: var(--text-secondary); text-align: center; line-height: 1.5; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
-        .metric-card { background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden; }
         
-        #store-count-card { 
-            animation-delay: 0s; 
-            grid-column: span 1; /* 移动端默认占一列 */
+        .metric-card { 
+            background: var(--card-gradient), var(--card-bg-color); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
+            border: 1px solid var(--border-color); 
+            border-radius: 16px; 
+            padding: 28px; 
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); 
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; 
+            opacity: 0; 
+            animation: fadeInUp 0.5s ease-out forwards; 
+            position: relative; 
+            overflow: hidden;
+            /* ============== START: CORE FIX ============== */
+            contain: layout style; /* 告诉浏览器该元素的内部布局变化不会影响外部，优化渲染性能 */
+            /* ============== END: CORE FIX ============== */
         }
         
-        /* 大屏幕样式 (PC, 平板, 手机横屏) */
-        @media (min-width: 169px) {
-            .header {
-                flex-direction: row; /* 横向排列 */
-                justify-content: space-between;
-                align-items: center;
-            }
-            .header h1 {
-                font-size: 4.8rem; /* 恢复PC端字号 */
-            }
-            .header .subtitle {
-                text-align: right; /* 恢复右对齐 */
-            }
-            #store-count-card {
-                grid-column: span 2; /* PC端占两列 */
-            }
+        /* ============== START: CORE FIX ============== */
+        .metric-card.is-hidden {
+            display: none; /* 使用类来控制显示和隐藏，而不是直接操作style */
         }
-        
-        /* ============== END: MOBILE-FIRST REFACTORED CODE ============== */
+        /* ============== END: CORE FIX ============== */
 
+        #store-count-card { animation-delay: 0s; grid-column: span 1; }
+        @media (min-width: 769px) {
+            .header { flex-direction: row; justify-content: space-between; align-items: center; }
+            .header h1 { font-size: 4.8rem; }
+            .header .subtitle { text-align: right; }
+            #store-count-card { grid-column: span 2; }
+        }
         .metric-card.glowing-up { border-color: var(--glow-up-color); animation: fadeInUp 0.5s ease-out forwards, glow-up 2s infinite ease-in-out; }
         .metric-card:not(#store-count-card) { animation-delay: 0.2s; }
         .metric-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 0 40px var(--glow-color), 0 12px 50px 0 rgba(0, 0, 0, 0.5); border-color: var(--accent-color); }
@@ -118,21 +86,17 @@
         .loader::after { border-bottom-color: var(--accent-color); animation: spinReverse 1s linear infinite; }
         .loading-text { display: flex; align-items: center; gap: 10px; font-size: 1.8rem; font-weight: 500; }
         .loading-text span { animation: pulse 1.5s infinite; }
-        .loading-text span:nth-child(1) { animation-delay: 0s; } .loading-text span:nth-child(2) { animation-delay: 0.2s; } .loading-text span:nth-child(3) { animation-delay: 0.4s; }
         #store-count-card { position: relative; background: var(--card-gradient), linear-gradient(135deg, rgba(0,191,255,0.1), rgba(18,24,34,0.9)); }
         #store-count-card .value { font-size: 5rem; line-height: 1.2; padding: 10px 0; display: flex; align-items: baseline; justify-content: center; gap: 8px; text-shadow: 0 0 15px rgba(0, 191, 255, 0.5); }
         #store-count-card .value .unit { font-size: 1.5rem; color: var(--text-secondary); font-weight: 400; }
         #store-count-card .value .plus { color: var(--accent-color); font-size: 3rem; }
         #store-count-card::after { content: '核心指标'; position: absolute; top: 15px; right: 15px; background: rgba(0,191,255,0.2); color: var(--accent-color); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
-        
     </style>
 </head>
 <body>
     <div id="loading" class="loading-overlay">
         <div class="loader"></div>
-        <div class="loading-text">
-            <span>🚀</span><span>启</span><span>动</span><span>中</span><span>.</span><span>.</span><span>.</span>
-        </div>
+        <div class="loading-text"><span>🚀</span><span>启</span><span>动</span><span>中</span>...</div>
         <p id="loading-status" style="font-size: 1rem; color: var(--text-secondary);"></p>
     </div>
     <div class="container">
@@ -153,19 +117,45 @@
                 </div>
                 <div class="comparison"></div>
             </div>
-        </div>
+            
+            <div class="metric-card is-hidden" data-name="成交金额">
+                <div class="name">成交金额</div>
+                <div class="value" data-prefix="¥">0</div>
+                <div class="comparison"></div>
+            </div>
+            <div class="metric-card is-hidden" data-name="核销金额">
+                <div class="name">核销金额</div>
+                <div class="value" data-prefix="¥">0</div>
+                <div class="comparison"></div>
+            </div>
+            <div class="metric-card is-hidden" data-name="商品访问人数">
+                <div class="name">商品访问人数</div>
+                <div class="value">0</div>
+                <div class="comparison"></div>
+            </div>
+            <div class="metric-card is-hidden" data-name="核销券数">
+                <div class="name">核销券数</div>
+                <div class="value">0</div>
+                <div class="comparison"></div>
+            </div>
+            </div>
     </div>
 
     <script>
-        const API_ENDPOINT = '/data'; const REFRESH_INTERVAL_MS = 10000; let lastKnownData = null;
+        const API_ENDPOINT = '/data'; 
+        const REFRESH_INTERVAL_MS = 10000; 
+        let lastKnownData = null;
+
         function animateValue(element, start, end, duration) {
-            if (start === end && element.textContent !== "" && !element.animating) return;
+            if (start === end && !element.animating) return;
             if (element.animating) return;
             element.animating = true;
             let startTimestamp = null;
             const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const currentVal = progress * (end - start) + start; const prefix = element.dataset.prefix || '';
+                if (!startTimestamp) startTimestamp = timestamp; 
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentVal = progress * (end - start) + start; 
+                const prefix = element.dataset.prefix || '';
                 if (Number.isInteger(start) && Number.isInteger(end)) {
                     element.innerHTML = prefix + Math.floor(currentVal).toLocaleString('en-US');
                 } else {
@@ -185,56 +175,60 @@
             return parseFloat(valueStr.replace(/[^0-9.-]/g, '')) || 0;
         }
         
+        // ============== START: CORE FIX (REWRITTEN FUNCTION) ==============
         function updateDashboard(currentData) {
             document.getElementById('update-time').textContent = currentData.update_time || 'N/A';
             document.getElementById('comparison-date').textContent = currentData.comparison_date || 'N/A';
+
             const metricsGrid = document.getElementById('metrics-grid');
+            const currentDataMap = new Map(currentData.metrics.map(m => [m.name, m]));
             const lastDataMap = new Map();
             if (lastKnownData && lastKnownData.metrics) {
                 lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m));
             }
-            const currentNames = new Set(currentData.metrics.map(m => m.name));
-            currentNames.add("门店数量");
-            metricsGrid.querySelectorAll('.metric-card').forEach(card => {
-                if (!currentNames.has(card.dataset.name)) { card.remove(); }
-            });
 
-            const dataToStore = { ...currentData, metrics: [] };
-            
-            currentData.metrics.forEach(metric => {
-                let card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
-                if (!card) {
-                    metricsGrid.insertAdjacentHTML('beforeend', `<div class="metric-card" data-name="${metric.name}"><div class="name"></div><div class="value" data-prefix=""></div><div class="comparison"></div></div>`);
-                    card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
-                }
-                const nameEl = card.querySelector('.name');
-                const valueEl = card.querySelector('.value');
-                const compEl = card.querySelector('.comparison');
-                nameEl.textContent = metric.name;
-                valueEl.dataset.prefix = metric.value.startsWith('¥') ? '¥' : '';
-
-                const lastMetric = lastDataMap.get(metric.name);
-                const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
-                const newValue = parseValue(metric.value);
-                const endValue = (newValue < startValue && lastMetric) ? startValue : newValue;
-
-                animateValue(valueEl, startValue, endValue, 1200);
-
-                const displayedMetric = { ...metric };
-                const prefix = valueEl.dataset.prefix || '';
-                const isInteger = Number.isInteger(endValue);
-                displayedMetric.value = prefix + (isInteger ? endValue.toLocaleString('en-US') : endValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                dataToStore.metrics.push(displayedMetric);
+            // 遍历所有预定义的卡片
+            metricsGrid.querySelectorAll('.metric-card[data-name]').forEach(card => {
+                const metricName = card.dataset.name;
                 
-                const statusClass = metric.status || 'neutral';
-                const arrow = statusClass === 'up' ? '▲' : '▼';
-                compEl.className = `comparison ${statusClass}`;
-                compEl.innerHTML = metric.comparison && metric.comparison.trim() !== 'N/A' ? `<span>${metric.comparison}</span><span class="arrow">${arrow}</span>` : '';
-                if (statusClass === 'up') { card.classList.add('glowing-up'); } else { card.classList.remove('glowing-up'); }
+                // 跳过固定的门店数量卡片
+                if (metricName === '门店数量') return;
+
+                const metricData = currentDataMap.get(metricName);
+
+                if (metricData) {
+                    // 如果新数据中有这个指标，则更新并显示它
+                    const valueEl = card.querySelector('.value');
+                    const compEl = card.querySelector('.comparison');
+                    
+                    valueEl.dataset.prefix = metricData.value.startsWith('¥') ? '¥' : '';
+                    
+                    const lastMetric = lastDataMap.get(metricName);
+                    const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
+                    const endValue = parseValue(metricData.value);
+
+                    animateValue(valueEl, startValue, endValue, 1200);
+
+                    const statusClass = metricData.status || 'neutral';
+                    const arrow = statusClass === 'up' ? '▲' : '▼';
+                    compEl.className = `comparison ${statusClass}`;
+                    compEl.innerHTML = metricData.comparison && metricData.comparison.trim() !== 'N/A' ? `<span>${metricData.comparison}</span><span class="arrow">${arrow}</span>` : '';
+                    
+                    card.classList.toggle('glowing-up', statusClass === 'up');
+                    
+                    // 确保卡片是可见的
+                    card.classList.remove('is-hidden');
+
+                } else {
+                    // 如果新数据中没有这个指标，则隐藏它
+                    card.classList.add('is-hidden');
+                }
             });
             
-            lastKnownData = dataToStore;
+            // 保存当前数据，以便下次比较
+            lastKnownData = currentData;
         }
+        // ============== END: CORE FIX (REWRITTEN FUNCTION) ==============
 
         async function fetchData() {
             try {
