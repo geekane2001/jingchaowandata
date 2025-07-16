@@ -81,7 +81,6 @@
             }
         }
         
-        /* ============== START: TV SCALING BUG FIX (ADJUSTED) ============== */
         /* 规则2：专门针对960x540分辨率的电视，抵消其放大效果 */
         @media (width: 960px) and (height: 540px) {
             .container {
@@ -95,7 +94,6 @@
                 max-width: 1867px; 
             }
         }
-        /* ============== END: TV SCALING BUG FIX (ADJUSTED) ============== */
     </style>
 </head>
 <body>
@@ -120,7 +118,7 @@
                 <div class="value">
                     676<span class="unit">连锁</span>
                     <span class="plus">+</span>
-                    272<span class="unit">共管</span>
+                    72<span class="unit">家共管</span>
                 </div>
                 <div class="comparison"></div>
             </div>
@@ -151,9 +149,11 @@
             window.requestAnimationFrame(step);
         }
 
+        // 修改parseValue函数，让它在解析失败时返回NaN，而不是0
         function parseValue(valueStr) {
-            if (typeof valueStr !== 'string') return 0;
-            return parseFloat(valueStr.replace(/[^0-9.-]/g, '')) || 0;
+            if (typeof valueStr !== 'string') return NaN;
+            // 移除了 || 0 的兜底，让无效值可以被识别
+            return parseFloat(valueStr.replace(/[^0-9.-]/g, ''));
         }
         
         function updateDashboard(currentData) {
@@ -164,15 +164,34 @@
             if (lastKnownData && lastKnownData.metrics) {
                 lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m));
             }
-            const currentNames = new Set(currentData.metrics.map(m => m.name));
-            currentNames.add("门店数量");
-            metricsGrid.querySelectorAll('.metric-card').forEach(card => {
-                if (!currentNames.has(card.dataset.name)) { card.remove(); }
-            });
-
-            const dataToStore = { ...currentData, metrics: [] };
             
-            currentData.metrics.forEach(metric => {
+            // ============== START: BUG FIX (数据有效性检查) ==============
+            // 过滤掉从后端传来的无效数据
+            const validCurrentMetrics = currentData.metrics.filter(metric => {
+                if (metric && typeof metric.value !== 'undefined') {
+                    const parsed = parseValue(metric.value);
+                    return !isNaN(parsed);
+                }
+                return false;
+            });
+            const validCurrentNames = new Set(validCurrentMetrics.map(m => m.name));
+            validCurrentNames.add("门店数量");
+            
+            // 基于有效名称的集合来决定是否移除卡片
+            metricsGrid.querySelectorAll('.metric-card').forEach(card => {
+                const cardName = card.dataset.name;
+                if (cardName !== "门店数量" && !validCurrentNames.has(cardName)) {
+                     // 旧版逻辑是直接删除，但我们现在可以先隐藏，避免重排
+                     card.style.display = 'none';
+                } else {
+                     card.style.display = ''; // 确保有效的卡片是可见的
+                }
+            });
+            
+            const dataToStore = { ...currentData, metrics: [] };
+
+            validCurrentMetrics.forEach(metric => {
+            // ============== END: BUG FIX (数据有效性检查) ==============
                 let card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
                 if (!card) {
                     metricsGrid.insertAdjacentHTML('beforeend', `<div class="metric-card" data-name="${metric.name}"><div class="name"></div><div class="value" data-prefix=""></div><div class="comparison"></div></div>`);
@@ -185,8 +204,9 @@
                 valueEl.dataset.prefix = metric.value.startsWith('¥') ? '¥' : '';
 
                 const lastMetric = lastDataMap.get(metric.name);
-                const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
-                const newValue = parseValue(metric.value);
+                // 确保动画起始值也是有效数字，否则为0
+                const startValue = lastMetric ? (parseValue(lastMetric.value) || 0) : 0;
+                const newValue = parseValue(metric.value); // newValue 此时一定是有效数字
                 const endValue = (newValue < startValue && lastMetric) ? startValue : newValue;
 
                 animateValue(valueEl, startValue, endValue, 1200);
@@ -202,6 +222,13 @@
                 compEl.className = `comparison ${statusClass}`;
                 compEl.innerHTML = metric.comparison && metric.comparison.trim() !== 'N/A' ? `<span>${metric.comparison}</span><span class="arrow">${arrow}</span>` : '';
                 if (statusClass === 'up') { card.classList.add('glowing-up'); } else { card.classList.remove('glowing-up'); }
+            });
+            
+            // 将之前有效的旧数据也合并到存储中，以便下次对比
+            lastDataMap.forEach((lastMetric, name) => {
+                if (!validCurrentNames.has(name)) {
+                    dataToStore.metrics.push(lastMetric);
+                }
             });
             
             lastKnownData = dataToStore;
