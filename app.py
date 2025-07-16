@@ -59,7 +59,31 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
         )
         raw_content = response.choices[0].message.content
         if raw_content.startswith("```json"): raw_content = raw_content[7:-3].strip()
-        return json.loads(raw_content)
+        
+        data = json.loads(raw_content)
+
+        # ============== START: CORE BUG FIX ==============
+        # 过滤掉 metrics 中 value 字段不是有效数字的项
+        if "metrics" in data and isinstance(data["metrics"], list):
+            valid_metrics = []
+            for metric in data["metrics"]:
+                value_str = metric.get("value", "")
+                # 尝试从字符串中提取数字部分
+                numeric_part = "".join(filter(lambda x: x in '0123456789.', value_str))
+                if numeric_part and numeric_part != '.':
+                    try:
+                        # 确认可以被成功解析为浮点数
+                        float(numeric_part)
+                        valid_metrics.append(metric)
+                    except ValueError:
+                        logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不是有效数字。")
+                        continue
+                else:
+                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字。")
+            data["metrics"] = valid_metrics
+        # ============== END: CORE BUG FIX ==============
+
+        return data
     except Exception as e:
         logging.error(f"调用视觉模型或解析JSON时出错: {e}")
         return {}
