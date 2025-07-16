@@ -31,22 +31,15 @@
         @keyframes spinReverse { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
         body { font-family: 'Exo 2', 'Noto Sans SC', sans-serif; background-color: var(--bg-color); background-image: radial-gradient(circle at 10% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 20%); background-size: 300px 300px; color: var(--text-primary); margin: 0; padding: 24px; min-height: 100vh; box-sizing: border-box; animation: backgroundFlow 20s linear infinite; overflow-x: hidden; }
         .container { max-width: 1400px; margin: auto; display: flex; flex-direction: column; gap: 32px; }
-        .header { display: flex; flex-direction: column; text-align: center; gap: 15px; border-bottom: 1px solid var(--border-color); animation: fadeInUp 0.5s ease-out; position: relative; background: var(--header-gradient); padding: 20px 30px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); animation: fadeInUp 0.5s ease-out; position: relative; background: var(--header-gradient); padding: 20px 30px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
         .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--accent-color), transparent); }
-        .header h1 { font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; font-size: 3.5rem; margin: 0; font-weight: normal; background: linear-gradient(90deg, #ffffff, var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -1px; position: relative; padding-left: 15px; }
+        .header h1 { font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; font-size: 4.8rem; margin: 0; font-weight: normal; background: linear-gradient(90deg, #ffffff, var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -1px; position: relative; padding-left: 15px; }
         .header h1::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 70%; width: 5px; background: var(--accent-color); border-radius: 10px; }
-        .header .subtitle { font-size: 0.875rem; color: var(--text-secondary); text-align: center; line-height: 1.5; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .header .subtitle { font-size: 0.875rem; color: var(--text-secondary); text-align: right; line-height: 1.5; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
-        .metric-card { background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden; contain: layout style; }
-        .metric-card.is-hidden { display: none; }
-        #store-count-card { animation-delay: 0s; grid-column: span 1; }
-        @media (min-width: 769px) {
-            .header { flex-direction: row; justify-content: space-between; align-items: center; }
-            .header h1 { font-size: 4.8rem; }
-            .header .subtitle { text-align: right; }
-            #store-count-card { grid-column: span 2; }
-        }
+        .metric-card { background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden; }
         .metric-card.glowing-up { border-color: var(--glow-up-color); animation: fadeInUp 0.5s ease-out forwards, glow-up 2s infinite ease-in-out; }
+        #store-count-card { animation-delay: 0s; grid-column: span 2; }
         .metric-card:not(#store-count-card) { animation-delay: 0.2s; }
         .metric-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 0 40px var(--glow-color), 0 12px 50px 0 rgba(0, 0, 0, 0.5); border-color: var(--accent-color); }
         .metric-card .name { font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.5px; display: flex; align-items: center; }
@@ -69,12 +62,52 @@
         #store-count-card .value .unit { font-size: 1.5rem; color: var(--text-secondary); font-weight: 400; }
         #store-count-card .value .plus { color: var(--accent-color); font-size: 3rem; }
         #store-count-card::after { content: '核心指标'; position: absolute; top: 15px; right: 15px; background: rgba(0,191,255,0.2); color: var(--accent-color); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
+
+        /* 规则1：针对移动端竖屏的样式 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .header .subtitle {
+                text-align: center;
+            }
+            #store-count-card {
+                grid-column: span 1;
+            }
+            .header h1 {
+                font-size: 3.5rem;
+            }
+        }
+        
+        /* ============== START: TV BUG FIX ============== */
+        /* 规则2：专门针对960x540分辨率的电视，强制使用PC端样式 */
+        @media (width: 960px) and (height: 540px) {
+            .header {
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+            }
+            .header .subtitle {
+                text-align: right !important;
+            }
+            #store-count-card {
+                grid-column: span 2 !important;
+            }
+            .header h1 {
+                font-size: 4.8rem !important;
+            }
+        }
+        /* ============== END: TV BUG FIX ============== */
     </style>
 </head>
 <body>
     <div id="loading" class="loading-overlay">
         <div class="loader"></div>
-        <div class="loading-text"><span>🚀</span><span>启</span><span>动</span><span>中</span>...</div>
+        <div class="loading-text">
+            <span>🚀</span><span>启</span><span>动</span><span>中</span><span>.</span><span>.</span><span>.</span>
+        </div>
         <p id="loading-status" style="font-size: 1rem; color: var(--text-secondary);"></p>
     </div>
     <div class="container">
@@ -95,35 +128,33 @@
                 </div>
                 <div class="comparison"></div>
             </div>
-            <div class="metric-card is-hidden" data-name="成交金额">
-                <div class="name">成交金额</div>
-                <div class="value" data-prefix="¥">0</div>
-                <div class="comparison"></div>
-            </div>
-            <div class="metric-card is-hidden" data-name="核销金额">
-                <div class="name">核销金额</div>
-                <div class="value" data-prefix="¥">0</div>
-                <div class="comparison"></div>
-            </div>
-            <div class="metric-card is-hidden" data-name="商品访问人数">
-                <div class="name">商品访问人数</div>
-                <div class="value">0</div>
-                <div class="comparison"></div>
-            </div>
-            <div class="metric-card is-hidden" data-name="核销券数">
-                <div class="name">核销券数</div>
-                <div class="value">0</div>
-                <div class="comparison"></div>
-            </div>
         </div>
     </div>
 
     <script>
-        const API_ENDPOINT = '/data'; 
-        const REFRESH_INTERVAL_MS = 10000; 
-        let lastKnownData = null;
-
-        // 数字动画函数已被移除，因为它是导致电视浏览器渲染问题的根源
+        // 恢复到最开始的JS逻辑，只通过CSS来解决问题
+        const API_ENDPOINT = '/data'; const REFRESH_INTERVAL_MS = 10000; let lastKnownData = null;
+        function animateValue(element, start, end, duration) {
+            if (start === end && element.textContent !== "" && !element.animating) return;
+            if (element.animating) return;
+            element.animating = true;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentVal = progress * (end - start) + start; const prefix = element.dataset.prefix || '';
+                if (Number.isInteger(start) && Number.isInteger(end)) {
+                    element.innerHTML = prefix + Math.floor(currentVal).toLocaleString('en-US');
+                } else {
+                    element.innerHTML = prefix + currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    element.animating = false;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
 
         function parseValue(valueStr) {
             if (typeof valueStr !== 'string') return 0;
@@ -133,52 +164,52 @@
         function updateDashboard(currentData) {
             document.getElementById('update-time').textContent = currentData.update_time || 'N/A';
             document.getElementById('comparison-date').textContent = currentData.comparison_date || 'N/A';
-
             const metricsGrid = document.getElementById('metrics-grid');
-            const currentDataMap = new Map(currentData.metrics.map(m => [m.name, m]));
+            const lastDataMap = new Map();
+            if (lastKnownData && lastKnownData.metrics) {
+                lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m));
+            }
+            const currentNames = new Set(currentData.metrics.map(m => m.name));
+            currentNames.add("门店数量");
+            metricsGrid.querySelectorAll('.metric-card').forEach(card => {
+                if (!currentNames.has(card.dataset.name)) { card.remove(); }
+            });
+
+            const dataToStore = { ...currentData, metrics: [] };
             
-            metricsGrid.querySelectorAll('.metric-card[data-name]').forEach(card => {
-                const metricName = card.dataset.name;
-                if (metricName === '门店数量') return;
-
-                const metricData = currentDataMap.get(metricName);
-
-                if (metricData) {
-                    const valueEl = card.querySelector('.value');
-                    const compEl = card.querySelector('.comparison');
-                    
-                    const endValue = parseValue(metricData.value);
-                    const prefix = metricData.value.startsWith('¥') ? '¥' : '';
-
-                    // ============== START: CORE FIX ==============
-                    // 1. 禁用动画，直接更新数值
-                    if (Number.isInteger(endValue)) {
-                        valueEl.innerHTML = prefix + endValue.toLocaleString('en-US');
-                    } else {
-                        valueEl.innerHTML = prefix + endValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                    }
-                    // ============== END: CORE FIX ==============
-
-                    const statusClass = metricData.status || 'neutral';
-                    const arrow = statusClass === 'up' ? '▲' : '▼';
-                    compEl.className = `comparison ${statusClass}`;
-                    compEl.innerHTML = metricData.comparison && metricData.comparison.trim() !== 'N/A' ? `<span>${metricData.comparison}</span><span class="arrow">${arrow}</span>` : '';
-                    
-                    card.classList.toggle('glowing-up', statusClass === 'up');
-                    card.classList.remove('is-hidden');
-
-                } else {
-                    card.classList.add('is-hidden');
+            currentData.metrics.forEach(metric => {
+                let card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
+                if (!card) {
+                    metricsGrid.insertAdjacentHTML('beforeend', `<div class="metric-card" data-name="${metric.name}"><div class="name"></div><div class="value" data-prefix=""></div><div class="comparison"></div></div>`);
+                    card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
                 }
+                const nameEl = card.querySelector('.name');
+                const valueEl = card.querySelector('.value');
+                const compEl = card.querySelector('.comparison');
+                nameEl.textContent = metric.name;
+                valueEl.dataset.prefix = metric.value.startsWith('¥') ? '¥' : '';
+
+                const lastMetric = lastDataMap.get(metric.name);
+                const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
+                const newValue = parseValue(metric.value);
+                const endValue = (newValue < startValue && lastMetric) ? startValue : newValue;
+
+                animateValue(valueEl, startValue, endValue, 1200);
+
+                const displayedMetric = { ...metric };
+                const prefix = valueEl.dataset.prefix || '';
+                const isInteger = Number.isInteger(endValue);
+                displayedMetric.value = prefix + (isInteger ? endValue.toLocaleString('en-US') : endValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                dataToStore.metrics.push(displayedMetric);
+                
+                const statusClass = metric.status || 'neutral';
+                const arrow = statusClass === 'up' ? '▲' : '▼';
+                compEl.className = `comparison ${statusClass}`;
+                compEl.innerHTML = metric.comparison && metric.comparison.trim() !== 'N/A' ? `<span>${metric.comparison}</span><span class="arrow">${arrow}</span>` : '';
+                if (statusClass === 'up') { card.classList.add('glowing-up'); } else { card.classList.remove('glowing-up'); }
             });
             
-            lastKnownData = currentData;
-
-            // ============== START: CORE FIX ==============
-            // 2. 强制浏览器重绘，以修复特定设备上的渲染BUG
-            // 通过读取一个布局属性，可以“欺骗”浏览器重新计算并应用正确的CSS
-            document.body.offsetHeight; 
-            // ============== END: CORE FIX ==============
+            lastKnownData = dataToStore;
         }
 
         async function fetchData() {
