@@ -12,7 +12,9 @@
         @font-face {
             font-family: 'YouSheBiaoTiHei';
             src: url('./YouSheBiaoTiHei-2.ttf') format('truetype');
-            font-weight: normal; font-style: normal; font-display: swap;
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
         }
         :root {
             --bg-color: #0a0e15; --card-bg-color: rgba(18, 24, 34, 0.85);
@@ -29,60 +31,118 @@
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @keyframes spinReverse { 0% { transform: rotate(0deg); } 100% { transform: rotate(-360deg); } }
-        body { font-family: 'Exo 2', 'Noto Sans SC', sans-serif; background-color: var(--bg-color); background-image: radial-gradient(circle at 10% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 20%); background-size: 300px 300px; color: var(--text-primary); margin: 0; padding: 24px; min-height: 100vh; box-sizing: border-box; animation: backgroundFlow 20s linear infinite; overflow-x: hidden; }
+        body {
+            font-family: 'Exo 2', 'Noto Sans SC', sans-serif; background-color: var(--bg-color);
+            background-image: radial-gradient(circle at 10% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 20%), radial-gradient(circle at 90% 80%, rgba(0, 191, 255, 0.05) 0%, transparent 20%);
+            background-size: 300px 300px; color: var(--text-primary); margin: 0; padding: 24px; min-height: 100vh;
+            box-sizing: border-box; animation: backgroundFlow 20s linear infinite; overflow-x: hidden;
+        }
         .container { max-width: 1400px; margin: auto; display: flex; flex-direction: column; gap: 32px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); animation: fadeInUp 0.5s ease-out; position: relative; background: var(--header-gradient); padding: 20px 30px; border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); }
-        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, var(--accent-color), transparent); }
-        .header h1 { font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; font-size: 4.8rem; margin: 0; font-weight: normal; background: linear-gradient(90deg, #ffffff, var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -1px; position: relative; padding-left: 15px; }
-        .header h1::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 70%; width: 5px; background: var(--accent-color); border-radius: 10px; }
-        .header .subtitle { font-size: 0.875rem; color: var(--text-secondary); text-align: right; line-height: 1.5; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
+        .header {
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color);
+            animation: fadeInUp 0.5s ease-out; position: relative; background: var(--header-gradient); padding: 20px 30px;
+            border-radius: 16px; margin-bottom: 10px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .header::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+        }
+        .header h1 {
+            font-family: 'YouSheBiaoTiHei', 'Exo 2', sans-serif; font-size: 4.8rem; margin: 0; font-weight: normal;
+            background: linear-gradient(90deg, #ffffff, var(--accent-color)); -webkit-background-clip: text; background-clip: text; color: transparent;
+            letter-spacing: -1px; position: relative; padding-left: 15px;
+        }
+        .header h1::before {
+            content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+            height: 70%; width: 5px; background: var(--accent-color); border-radius: 10px;
+        }
+        .header .subtitle {
+            font-size: 0.875rem; color: var(--text-secondary); text-align: right; line-height: 1.5;
+            background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);
+        }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
-        .metric-card { background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden; }
-        .metric-card.glowing-up { border-color: var(--glow-up-color); animation: fadeInUp 0.5s ease-out forwards, glow-up 2s infinite ease-in-out; }
+        .metric-card {
+            background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color); border-radius: 16px; padding: 28px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden;
+        }
+        .metric-card.glowing-up {
+            border-color: var(--glow-up-color); animation: fadeInUp 0.5s ease-out forwards, glow-up 2s infinite ease-in-out;
+        }
         #store-count-card { animation-delay: 0s; grid-column: span 2; }
         .metric-card:not(#store-count-card) { animation-delay: 0.2s; }
-        .metric-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: 0 0 40px var(--glow-color), 0 12px 50px 0 rgba(0, 0, 0, 0.5); border-color: var(--accent-color); }
-        .metric-card .name { font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.5px; display: flex; align-items: center; }
-        .metric-card .name::before { content: ''; display: inline-block; width: 8px; height: 8px; background: var(--accent-color); border-radius: 50%; margin-right: 10px; }
-        .metric-card .value { font-size: 3rem; font-weight: 700; color: var(--text-primary); margin: 15px 0; line-height: 1.1; text-shadow: 0 0 10px rgba(0, 191, 255, 0.3); letter-spacing: -1px; }
+        .metric-card:hover {
+            transform: translateY(-8px) scale(1.02); box-shadow: 0 0 40px var(--glow-color), 0 12px 50px 0 rgba(0, 0, 0, 0.5);
+            border-color: var(--accent-color);
+        }
+        .metric-card .name {
+            font-size: 1.1rem; color: var(--text-secondary); font-weight: 500; letter-spacing: 0.5px; display: flex; align-items: center;
+        }
+        .metric-card .name::before {
+            content: ''; display: inline-block; width: 8px; height: 8px; background: var(--accent-color);
+            border-radius: 50%; margin-right: 10px;
+        }
+        .metric-card .value {
+            font-size: 3rem; font-weight: 700; color: var(--text-primary); margin: 15px 0; line-height: 1.1;
+            text-shadow: 0 0 10px rgba(0, 191, 255, 0.3); letter-spacing: -1px;
+        }
         .metric-card .comparison { font-size: 1rem; display: flex; align-items: center; font-weight: 500; min-height: 24px; }
         .metric-card .comparison.up { color: var(--color-up); }
         .metric-card .comparison.down { color: var(--color-down); }
         .metric-card .comparison .arrow { font-size: 1.25rem; margin-left: 6px; font-weight: bold; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem; color: var(--text-primary); flex-direction: column; gap: 25px; transition: opacity 0.5s ease; }
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color);
+            display: flex; justify-content: center; align-items: center; z-index: 1000; font-size: 1.5rem;
+            color: var(--text-primary); flex-direction: column; gap: 25px; transition: opacity 0.5s ease;
+        }
         .loading-overlay.hidden { opacity: 0; pointer-events: none; }
         .loader { width: 80px; height: 80px; position: relative; }
-        .loader::before, .loader::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border: 5px solid transparent; border-radius: 50%; }
+        .loader::before, .loader::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border: 5px solid transparent; border-radius: 50%;
+        }
         .loader::before { border-top-color: var(--accent-color); animation: spin 1.5s linear infinite; }
         .loader::after { border-bottom-color: var(--accent-color); animation: spinReverse 1s linear infinite; }
         .loading-text { display: flex; align-items: center; gap: 10px; font-size: 1.8rem; font-weight: 500; }
         .loading-text span { animation: pulse 1.5s infinite; }
         .loading-text span:nth-child(1) { animation-delay: 0s; } .loading-text span:nth-child(2) { animation-delay: 0.2s; } .loading-text span:nth-child(3) { animation-delay: 0.4s; }
-        #store-count-card { position: relative; background: var(--card-gradient), linear-gradient(135deg, rgba(0,191,255,0.1), rgba(18,24,34,0.9)); }
-        #store-count-card .value { font-size: 5rem; line-height: 1.2; padding: 10px 0; display: flex; align-items: baseline; justify-content: center; gap: 8px; text-shadow: 0 0 15px rgba(0, 191, 255, 0.5); }
-        #store-count-card .value .unit { font-size: 1.5rem; color: var(--text-secondary); font-weight: 400; }
-        #store-count-card .value .plus { color: var(--accent-color); font-size: 3rem; }
-        #store-count-card::after { content: '核心指标'; position: absolute; top: 15px; right: 15px; background: rgba(0,191,255,0.2); color: var(--accent-color); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
-        
-        /* ============== START: CORRECTED CODE ============== */
-        /* 这段代码仅在屏幕宽度小于768px且处于竖屏模式时生效 */
-        @media (max-width: 768px) and (orientation: portrait) {
-            .header {
-                flex-direction: column;
-                text-align: center;
-                gap: 15px;
-            }
-            .header .subtitle {
-                text-align: center;
-            }
-            #store-count-card {
-                grid-column: span 1;
-            }
-            .header h1 {
-                font-size: 3.5rem;
-            }
+        #store-count-card {
+            position: relative; background: var(--card-gradient), linear-gradient(135deg, rgba(0,191,255,0.1), rgba(18,24,34,0.9));
         }
-        /* ============== END: CORRECTED CODE ============== */
+        
+        /* ========================================================= */
+        /* === 2. 修改CSS：为新的文本格式调整样式 === */
+        /* ========================================================= */
+        #store-count-card .value {
+            font-size: 5rem; /* 减小字体以适应更长的文本 */
+            line-height: 1.2;
+            padding: 10px 0;
+            display: flex;
+            align-items: baseline; /* 基线对齐，让数字和单位更协调 */
+            justify-content: center;
+            gap: 8px; /* 增加元素间隔 */
+            text-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+        }
+        #store-count-card .value .unit {
+            font-size: 1.5rem; /* 单位的字体大小 */
+            color: var(--text-secondary); /* 单位颜色稍暗，突出数字 */
+            font-weight: 400;
+        }
+        #store-count-card .value .plus {
+            color: var(--accent-color);
+            font-size: 3rem;
+        }
+
+
+        #store-count-card::after {
+            content: '核心指标'; position: absolute; top: 15px; right: 15px; background: rgba(0,191,255,0.2);
+            color: var(--accent-color); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 500;
+        }
+        @media (max-width: 100px) {
+            .header { flex-direction: column; text-align: center; gap: 15px; } .header .subtitle { text-align: center; }
+            #store-count-card { grid-column: span 1; } .header h1 { font-size: 3.5rem; }
+        }
     </style>
 </head>
 <body>
@@ -104,60 +164,41 @@
         <div id="metrics-grid" class="metrics-grid">
             <div class="metric-card" data-name="门店数量" id="store-count-card">
                 <div class="name">门店数量</div>
+                <!-- ========================================================= -->
+                <!-- === 1. 修改HTML：直接写入您想要的文本格式 === -->
+                <!-- ========================================================= -->
                 <div class="value">
                     676<span class="unit">连锁</span>
                     <span class="plus">+</span>
-                    281<span class="unit">共管</span>
+                    292<span class="unit">共管</span>
                 </div>
                 <div class="comparison"></div>
             </div>
         </div>
     </div>
-
     <script>
         const API_ENDPOINT = '/data'; const REFRESH_INTERVAL_MS = 10000; let lastKnownData = null;
         function animateValue(element, start, end, duration) {
-            if (start === end && element.textContent !== "" && !element.animating) return;
-            if (element.animating) return;
-            element.animating = true;
+            if (start === end && element.textContent !== "") return; if (element.animating) return; element.animating = true;
             let startTimestamp = null;
             const step = (timestamp) => {
                 if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const currentVal = progress * (end - start) + start; const prefix = element.dataset.prefix || '';
-                if (Number.isInteger(start) && Number.isInteger(end)) {
-                    element.innerHTML = prefix + Math.floor(currentVal).toLocaleString('en-US');
-                } else {
-                    element.innerHTML = prefix + currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                }
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    element.animating = false;
-                }
+                if (Number.isInteger(start) && Number.isInteger(end)) { element.innerHTML = prefix + Math.floor(currentVal).toLocaleString('en-US');
+                } else { element.innerHTML = prefix + currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+                if (progress < 1) { window.requestAnimationFrame(step); } else { element.animating = false; }
             };
             window.requestAnimationFrame(step);
         }
-
-        function parseValue(valueStr) {
-            if (typeof valueStr !== 'string') return 0;
-            return parseFloat(valueStr.replace(/[^0-9.-]/g, '')) || 0;
-        }
+        function parseValue(valueStr) { if (typeof valueStr !== 'string') return 0; return parseFloat(valueStr.replace(/[^0-9.-]/g, '')) || 0; }
         
         function updateDashboard(currentData) {
             document.getElementById('update-time').textContent = currentData.update_time || 'N/A';
             document.getElementById('comparison-date').textContent = currentData.comparison_date || 'N/A';
-            const metricsGrid = document.getElementById('metrics-grid');
-            const lastDataMap = new Map();
-            if (lastKnownData && lastKnownData.metrics) {
-                lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m));
-            }
-            const currentNames = new Set(currentData.metrics.map(m => m.name));
-            currentNames.add("门店数量");
-            metricsGrid.querySelectorAll('.metric-card').forEach(card => {
-                if (!currentNames.has(card.dataset.name)) { card.remove(); }
-            });
-
-            const dataToStore = { ...currentData, metrics: [] };
+            const metricsGrid = document.getElementById('metrics-grid'); const lastDataMap = new Map();
+            if (lastKnownData && lastKnownData.metrics) { lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m)); }
+            const currentNames = new Set(currentData.metrics.map(m => m.name)); currentNames.add("门店数量");
+            metricsGrid.querySelectorAll('.metric-card').forEach(card => { if (!currentNames.has(card.dataset.name)) { card.remove(); } });
             
             currentData.metrics.forEach(metric => {
                 let card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
@@ -165,54 +206,34 @@
                     metricsGrid.insertAdjacentHTML('beforeend', `<div class="metric-card" data-name="${metric.name}"><div class="name"></div><div class="value" data-prefix=""></div><div class="comparison"></div></div>`);
                     card = metricsGrid.querySelector(`.metric-card[data-name="${metric.name}"]`);
                 }
-                const nameEl = card.querySelector('.name');
-                const valueEl = card.querySelector('.value');
-                const compEl = card.querySelector('.comparison');
-                nameEl.textContent = metric.name;
-                valueEl.dataset.prefix = metric.value.startsWith('¥') ? '¥' : '';
-
+                const nameEl = card.querySelector('.name'); const valueEl = card.querySelector('.value'); const compEl = card.querySelector('.comparison');
+                nameEl.textContent = metric.name; valueEl.dataset.prefix = metric.value.startsWith('¥') ? '¥' : '';
+                
                 const lastMetric = lastDataMap.get(metric.name);
                 const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
                 const newValue = parseValue(metric.value);
-                const endValue = (newValue < startValue && lastMetric) ? startValue : newValue;
-
-                animateValue(valueEl, startValue, endValue, 1200);
-
-                const displayedMetric = { ...metric };
-                const prefix = valueEl.dataset.prefix || '';
-                const isInteger = Number.isInteger(endValue);
-                displayedMetric.value = prefix + (isInteger ? endValue.toLocaleString('en-US') : endValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-                dataToStore.metrics.push(displayedMetric);
+                const endValue = (newValue < startValue) ? startValue : newValue;
                 
-                const statusClass = metric.status || 'neutral';
-                const arrow = statusClass === 'up' ? '▲' : '▼';
+                animateValue(valueEl, startValue, endValue, 1200);
+                
+                const statusClass = metric.status || 'neutral'; const arrow = statusClass === 'up' ? '▲' : '▼';
                 compEl.className = `comparison ${statusClass}`;
                 compEl.innerHTML = metric.comparison && metric.comparison.trim() !== 'N/A' ? `<span>${metric.comparison}</span><span class="arrow">${arrow}</span>` : '';
                 if (statusClass === 'up') { card.classList.add('glowing-up'); } else { card.classList.remove('glowing-up'); }
             });
             
-            lastKnownData = dataToStore;
+            lastKnownData = currentData;
         }
 
         async function fetchData() {
             try {
-                const res = await fetch(API_ENDPOINT);
-                if (!res.ok) { throw new Error(`HTTP error! status: ${res.status}`); }
-                const result = await res.json();
+                const res = await fetch(API_ENDPOINT); const result = await res.json();
                 document.getElementById('status-text').textContent = result.status;
-                if (result.data) {
-                    document.getElementById('loading').classList.add('hidden');
-                    updateDashboard(result.data);
-                } else {
-                    const loadingStatus = document.getElementById('loading-status');
-                    if (loadingStatus) { loadingStatus.textContent = result.status || '正在等待首次数据...'; }
-                }
-            } catch (err) {
-                console.error('Fetch data failed:', err);
-                document.getElementById('status-text').textContent = '获取数据失败，请检查网络或后端服务。';
-            }
+                if (res.ok && result.data) { document.getElementById('loading').classList.add('hidden'); updateDashboard(result.data);
+                } else { const loadingStatus = document.getElementById('loading-status'); if(loadingStatus) { loadingStatus.textContent = result.detail?.status || '正在等待首次数据...'; } }
+            } catch (err) { console.error('Error fetching data:', err); document.getElementById('status-text').textContent = '连接后端失败，请检查服务是否运行。'; }
         }
-        
+
         fetchData();
         setInterval(fetchData, REFRESH_INTERVAL_MS);
     </script>
