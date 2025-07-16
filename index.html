@@ -81,21 +81,21 @@
             }
         }
         
-        /* ============== START: TV SCALING BUG FIX ============== */
-        /* 规则2：专门针对960x540分辨率的电视，抵消其2倍放大效果 */
+        /* ============== START: TV SCALING BUG FIX (ADJUSTED) ============== */
+        /* 规则2：专门针对960x540分辨率的电视，抵消其放大效果 */
         @media (width: 960px) and (height: 540px) {
             .container {
-                /* 缩小50%来抵消电视的2倍放大 */
-                transform: scale(0.5);
+                /* 缩小75%来抵消电视的放大效果 */
+                transform: scale(0.75);
                 /* 从左上角开始缩放，防止布局偏移 */
                 transform-origin: top left;
-                /* 将容器宽度放大2倍，以填满缩小后的空间 */
-                width: 200%;
-                /* 由于容器宽度加倍，最大宽度也需要相应加倍 */
-                max-width: 2800px; /* 1400px * 2 */
+                /* 将容器宽度放大以填满缩小后的空间 (100 / 0.75 = 133.33) */
+                width: 133.33%;
+                /* 由于容器宽度加倍，最大宽度也需要相应加倍 (1400 / 0.75 ≈ 1867) */
+                max-width: 1867px; 
             }
         }
-        /* ============== END: TV SCALING BUG FIX ============== */
+        /* ============== END: TV SCALING BUG FIX (ADJUSTED) ============== */
     </style>
 </head>
 <body>
