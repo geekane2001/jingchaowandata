@@ -63,7 +63,26 @@
         #store-count-card .value .unit { font-size: 1.5rem; color: var(--text-secondary); font-weight: 400; }
         #store-count-card .value .plus { color: var(--accent-color); font-size: 3rem; }
         #store-count-card::after { content: '核心指标'; position: absolute; top: 15px; right: 15px; background: rgba(0,191,255,0.2); color: var(--accent-color); font-size: 0.8rem; padding: 3px 10px; border-radius: 20px; font-weight: 500; }
-        @media (max-width: 9999px) { .header { flex-direction: column; text-align: center; gap: 15px; } .header .subtitle { text-align: center; } #store-count-card { grid-column: span 1; } .header h1 { font-size: 3.5rem; } }
+        
+        /* ============== START: CORRECTED CODE ============== */
+        /* 这段代码仅在屏幕宽度小于768px且处于竖屏模式时生效 */
+        @media (max-width: 768px) and (orientation: portrait) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .header .subtitle {
+                text-align: center;
+            }
+            #store-count-card {
+                grid-column: span 1;
+            }
+            .header h1 {
+                font-size: 3.5rem;
+            }
+        }
+        /* ============== END: CORRECTED CODE ============== */
     </style>
 </head>
 <body>
@@ -88,7 +107,7 @@
                 <div class="value">
                     676<span class="unit">连锁</span>
                     <span class="plus">+</span>
-                    293<span class="unit">共管</span>
+                    281<span class="unit">共管</span>
                 </div>
                 <div class="comparison"></div>
             </div>
@@ -138,9 +157,6 @@
                 if (!currentNames.has(card.dataset.name)) { card.remove(); }
             });
 
-            // =========================================================
-            // === 核心BUG修复区域 ===
-            // =========================================================
             const dataToStore = { ...currentData, metrics: [] };
             
             currentData.metrics.forEach(metric => {
@@ -197,7 +213,6 @@
             }
         }
         
-        // 移除所有与静态卡片动画相关的代码
         fetchData();
         setInterval(fetchData, REFRESH_INTERVAL_MS);
     </script>
