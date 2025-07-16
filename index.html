@@ -81,25 +81,21 @@
             }
         }
         
-        /* ============== START: TV BUG FIX ============== */
-        /* 规则2：专门针对960x540分辨率的电视，强制使用PC端样式 */
+        /* ============== START: TV SCALING BUG FIX ============== */
+        /* 规则2：专门针对960x540分辨率的电视，抵消其2倍放大效果 */
         @media (width: 960px) and (height: 540px) {
-            .header {
-                flex-direction: row !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-            }
-            .header .subtitle {
-                text-align: right !important;
-            }
-            #store-count-card {
-                grid-column: span 2 !important;
-            }
-            .header h1 {
-                font-size: 4.8rem !important;
+            .container {
+                /* 缩小50%来抵消电视的2倍放大 */
+                transform: scale(0.5);
+                /* 从左上角开始缩放，防止布局偏移 */
+                transform-origin: top left;
+                /* 将容器宽度放大2倍，以填满缩小后的空间 */
+                width: 200%;
+                /* 由于容器宽度加倍，最大宽度也需要相应加倍 */
+                max-width: 2800px; /* 1400px * 2 */
             }
         }
-        /* ============== END: TV BUG FIX ============== */
+        /* ============== END: TV SCALING BUG FIX ============== */
     </style>
 </head>
 <body>
@@ -132,7 +128,6 @@
     </div>
 
     <script>
-        // 恢复到最开始的JS逻辑，只通过CSS来解决问题
         const API_ENDPOINT = '/data'; const REFRESH_INTERVAL_MS = 10000; let lastKnownData = null;
         function animateValue(element, start, end, duration) {
             if (start === end && element.textContent !== "" && !element.animating) return;
