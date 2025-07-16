@@ -37,30 +37,8 @@
         .header h1::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 70%; width: 5px; background: var(--accent-color); border-radius: 10px; }
         .header .subtitle { font-size: 0.875rem; color: var(--text-secondary); text-align: center; line-height: 1.5; background: rgba(0, 0, 0, 0.3); padding: 10px 15px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); }
         .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 28px; }
-        
-        .metric-card { 
-            background: var(--card-gradient), var(--card-bg-color); 
-            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); 
-            border: 1px solid var(--border-color); 
-            border-radius: 16px; 
-            padding: 28px; 
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); 
-            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; 
-            opacity: 0; 
-            animation: fadeInUp 0.5s ease-out forwards; 
-            position: relative; 
-            overflow: hidden;
-            /* ============== START: CORE FIX ============== */
-            contain: layout style; /* 告诉浏览器该元素的内部布局变化不会影响外部，优化渲染性能 */
-            /* ============== END: CORE FIX ============== */
-        }
-        
-        /* ============== START: CORE FIX ============== */
-        .metric-card.is-hidden {
-            display: none; /* 使用类来控制显示和隐藏，而不是直接操作style */
-        }
-        /* ============== END: CORE FIX ============== */
-
+        .metric-card { background: var(--card-gradient), var(--card-bg-color); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border-color); border-radius: 16px; padding: 28px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; opacity: 0; animation: fadeInUp 0.5s ease-out forwards; position: relative; overflow: hidden; contain: layout style; }
+        .metric-card.is-hidden { display: none; }
         #store-count-card { animation-delay: 0s; grid-column: span 1; }
         @media (min-width: 769px) {
             .header { flex-direction: row; justify-content: space-between; align-items: center; }
@@ -117,7 +95,6 @@
                 </div>
                 <div class="comparison"></div>
             </div>
-            
             <div class="metric-card is-hidden" data-name="成交金额">
                 <div class="name">成交金额</div>
                 <div class="value" data-prefix="¥">0</div>
@@ -138,7 +115,7 @@
                 <div class="value">0</div>
                 <div class="comparison"></div>
             </div>
-            </div>
+        </div>
     </div>
 
     <script>
@@ -146,68 +123,41 @@
         const REFRESH_INTERVAL_MS = 10000; 
         let lastKnownData = null;
 
-        function animateValue(element, start, end, duration) {
-            if (start === end && !element.animating) return;
-            if (element.animating) return;
-            element.animating = true;
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp; 
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const currentVal = progress * (end - start) + start; 
-                const prefix = element.dataset.prefix || '';
-                if (Number.isInteger(start) && Number.isInteger(end)) {
-                    element.innerHTML = prefix + Math.floor(currentVal).toLocaleString('en-US');
-                } else {
-                    element.innerHTML = prefix + currentVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                }
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    element.animating = false;
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
+        // 数字动画函数已被移除，因为它是导致电视浏览器渲染问题的根源
 
         function parseValue(valueStr) {
             if (typeof valueStr !== 'string') return 0;
             return parseFloat(valueStr.replace(/[^0-9.-]/g, '')) || 0;
         }
         
-        // ============== START: CORE FIX (REWRITTEN FUNCTION) ==============
         function updateDashboard(currentData) {
             document.getElementById('update-time').textContent = currentData.update_time || 'N/A';
             document.getElementById('comparison-date').textContent = currentData.comparison_date || 'N/A';
 
             const metricsGrid = document.getElementById('metrics-grid');
             const currentDataMap = new Map(currentData.metrics.map(m => [m.name, m]));
-            const lastDataMap = new Map();
-            if (lastKnownData && lastKnownData.metrics) {
-                lastKnownData.metrics.forEach(m => lastDataMap.set(m.name, m));
-            }
-
-            // 遍历所有预定义的卡片
+            
             metricsGrid.querySelectorAll('.metric-card[data-name]').forEach(card => {
                 const metricName = card.dataset.name;
-                
-                // 跳过固定的门店数量卡片
                 if (metricName === '门店数量') return;
 
                 const metricData = currentDataMap.get(metricName);
 
                 if (metricData) {
-                    // 如果新数据中有这个指标，则更新并显示它
                     const valueEl = card.querySelector('.value');
                     const compEl = card.querySelector('.comparison');
                     
-                    valueEl.dataset.prefix = metricData.value.startsWith('¥') ? '¥' : '';
-                    
-                    const lastMetric = lastDataMap.get(metricName);
-                    const startValue = lastMetric ? parseValue(lastMetric.value) : 0;
                     const endValue = parseValue(metricData.value);
+                    const prefix = metricData.value.startsWith('¥') ? '¥' : '';
 
-                    animateValue(valueEl, startValue, endValue, 1200);
+                    // ============== START: CORE FIX ==============
+                    // 1. 禁用动画，直接更新数值
+                    if (Number.isInteger(endValue)) {
+                        valueEl.innerHTML = prefix + endValue.toLocaleString('en-US');
+                    } else {
+                        valueEl.innerHTML = prefix + endValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                    // ============== END: CORE FIX ==============
 
                     const statusClass = metricData.status || 'neutral';
                     const arrow = statusClass === 'up' ? '▲' : '▼';
@@ -215,20 +165,21 @@
                     compEl.innerHTML = metricData.comparison && metricData.comparison.trim() !== 'N/A' ? `<span>${metricData.comparison}</span><span class="arrow">${arrow}</span>` : '';
                     
                     card.classList.toggle('glowing-up', statusClass === 'up');
-                    
-                    // 确保卡片是可见的
                     card.classList.remove('is-hidden');
 
                 } else {
-                    // 如果新数据中没有这个指标，则隐藏它
                     card.classList.add('is-hidden');
                 }
             });
             
-            // 保存当前数据，以便下次比较
             lastKnownData = currentData;
+
+            // ============== START: CORE FIX ==============
+            // 2. 强制浏览器重绘，以修复特定设备上的渲染BUG
+            // 通过读取一个布局属性，可以“欺骗”浏览器重新计算并应用正确的CSS
+            document.body.offsetHeight; 
+            // ============== END: CORE FIX ==============
         }
-        // ============== END: CORE FIX (REWRITTEN FUNCTION) ==============
 
         async function fetchData() {
             try {
