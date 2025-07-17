@@ -29,7 +29,6 @@ MODEL_ID = 'Qwen/Qwen2.5-VL-72B-Instruct'
 
 app_state = {"latest_data": None, "status": "Initializing..."}
 
-# ============== START: 核心提示词优化 ==============
 def get_detailed_prompt():
     return """
     你是一个极其严谨细致的数据提取助手。请分析这张仪表盘截图，并提取所有关键指标卡片的信息。
@@ -49,7 +48,6 @@ def get_detailed_prompt():
         * **正确示例**: 图片中“核销券数”未加载，应返回 `{"name": "核销券数", "value": "", "comparison": "", "status": ""}`。
     3.  **忽略其他**: 忽略 “退款金额” 以及任何其他未在目标列表中指定的指标。
     """
-# ============== END: 核心提示词优化 ==============
 
 def encode_image_to_base64(image_path: str) -> str:
     try:
@@ -87,12 +85,11 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
                         float(numeric_part)
                         valid_metrics.append(metric)
                     except ValueError:
-                        logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不是有效数字。")
+                        logging.warning(f"过滤无效指标 (格式错误): {metric.get('name')} 的值 '{value_str}'")
                         continue
                 else:
-                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字或为空。")
+                    logging.warning(f"过滤无效指标 (无数字): {metric.get('name')} 的值 '{value_str}'")
             data["metrics"] = valid_metrics
-
         return data
     except Exception as e:
         logging.error(f"调用视觉模型或解析JSON时出错: {e}")
@@ -145,13 +142,24 @@ async def run_playwright_scraper():
                 if image_base64:
                     logging.info("截图成功，正在发送给AI进行分析...")
                     analysis_result = await analyze_image_with_vlm(image_base64)
-                    if analysis_result:
+
+                    # ============== START: 最终的健壮性检查 ==============
+                    # 如果分析结果有效，但其中不包含任何一个有效的指标（即 metrics 列表为空），
+                    # 这意味着截图可能为空白页，VLM返回了所有指标为空。
+                    # 在这种情况下，我们不更新数据，以保留上一次的有效状态。
+                    if analysis_result and not analysis_result.get("metrics"):
+                        app_state["status"] = "AI分析结果全为空，判定为无效抓取，已保留上一次数据。"
+                        logging.warning(app_state["status"])
+                    elif analysis_result:
+                        # 只有当分析结果中至少有一个有效指标时，才更新数据
                         app_state["latest_data"] = analysis_result
                         app_state["status"] = f"数据已更新。下一次刷新在 {REFRESH_INTERVAL_SECONDS} 秒后。"
                         logging.info("AI分析完成，数据已更新。")
                     else:
-                        app_state["status"] = "AI分析未能生成有效数据，正在重试..."
+                        # 如果分析过程本身就失败了（例如API调用失败或JSON解析失败）
+                        app_state["status"] = "AI分析过程失败，正在重试..."
                         logging.warning(app_state["status"])
+                    # ============== END: 最终的健壮性检查 ==============
                 else:
                     app_state["status"] = "创建截图失败，正在重试..."
                     logging.warning(app_state["status"])
