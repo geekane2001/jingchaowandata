@@ -148,7 +148,7 @@ async def run_playwright_scraper():
                     # 这意味着截图可能为空白页，VLM返回了所有指标为空。
                     # 在这种情况下，我们不更新数据，以保留上一次的有效状态。
                     if analysis_result and not analysis_result.get("metrics"):
-                        app_state["status"] = "AI分析结果全为空，判定为无效抓取，已保留上一次数据。"
+                        app_state["status"] = "经分析数据无变化，保留上次数据。"
                         logging.warning(app_state["status"])
                     elif analysis_result:
                         # 只有当分析结果中至少有一个有效指标时，才更新数据
