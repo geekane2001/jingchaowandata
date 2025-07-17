@@ -58,40 +58,32 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
             }]
         )
         raw_content = response.choices[0].message.content
+        
+        # ============== START: 核心调试代码 ==============
+        # 打印从 VLM API 收到的最原始的、未经处理的字符串
+        logging.info(f"VLM 原始返回内容: {raw_content}")
+        # ============== END: 核心调试代码 ==============
+
         if raw_content.startswith("```json"): raw_content = raw_content[7:-3].strip()
         
         data = json.loads(raw_content)
 
-        # ============== START: 核心Bug修复代码 ==============
-        # 增加对模型返回的 metrics 列表进行校验和过滤的逻辑
+        # 保留之前的Bug修复代码，作为第二道防线
         if "metrics" in data and isinstance(data["metrics"], list):
             valid_metrics = []
             for metric in data["metrics"]:
-                # 获取 value 字段，确保为字符串
-                value_str = str(metric.get("value", ""))
-                
-                # 尝试从字符串中提取所有数字和小数点
+                value_str = metric.get("value", "")
                 numeric_part = "".join(filter(lambda x: x in '0123456789.', value_str))
-                
-                # 检查提取出的部分是否是一个有效的数字
-                # 必须含有数字，且不能只是一个小数点
                 if numeric_part and numeric_part != '.':
                     try:
-                        # 最终确认可以被成功解析为浮点数
                         float(numeric_part)
-                        # 如果所有检查都通过，则这是一个有效的指标
                         valid_metrics.append(metric)
                     except ValueError:
-                        # 如果不能转换为float（例如 "1.2.3"），则是无效的
-                        logging.warning(f"过滤无效指标: {metric.get('name')} 的值 '{value_str}' 包含无效数字格式。")
+                        logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不是有效数字。")
                         continue
                 else:
-                    # 如果值不包含任何数字 (例如 "N/A", "无法识别")
-                    logging.warning(f"过滤无效指标: {metric.get('name')} 的值 '{value_str}' 不含任何数字。")
-            
-            # 用清洗过的、有效的指标列表替换原始列表
+                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字。")
             data["metrics"] = valid_metrics
-        # ============== END: 核心Bug修复代码 ==============
 
         return data
     except Exception as e:
@@ -117,33 +109,19 @@ async def run_playwright_scraper():
             
         page = await context.new_page()
         try:
-            # 首次加载页面
             logging.info(f"正在导航到: {TARGET_URL}")
             await page.goto(TARGET_URL, wait_until="load", timeout=60000)
             logging.info("页面首次加载完成。")
 
             while True:
                 logging.info("开始新一轮数据刷新...")
-                
-                # --- START: 核心修改区域 ---
-                
-                # 步骤 1: 重新加载页面，但使用 'load' 替代 'networkidle'
-                # 'load' 事件在页面主要资源加载后即触发，不会被实时数据请求阻塞
                 await page.reload(wait_until="load", timeout=30000)
                 logging.info("页面已重新加载。")
-
-                # 步骤 2: 等待一个关键的数据元素出现，这标志着仪表盘已渲染
-                # 我们选择等待包含“成交金额”文本的元素，这是一个可靠的指标
-                # 你需要用浏览器的开发者工具检查目标页面，找到一个最合适的选择器
                 key_element_selector = "div:has-text('成交金额')"
                 logging.info(f"正在等待关键元素 '{key_element_selector}' 出现...")
                 await page.wait_for_selector(key_element_selector, timeout=30000)
                 logging.info("关键元素已找到，数据已渲染。")
-
-                # 步骤 3 (可选，但推荐): 添加一个短暂的固定延时，以确保动画或最终渲染完成
-                await asyncio.sleep(2) # 等待2秒
-                
-                # --- END: 核心修改区域 ---
+                await asyncio.sleep(2)
 
                 logging.info("正在截取屏幕...")
                 await page.screenshot(path=SCREENSHOT_PATH, full_page=True)
@@ -189,6 +167,6 @@ app.mount("/", StaticFiles(directory=".", html=True), name="static")
 if __name__ == "__main__":
     print("\n" + "="*60)
     print("      🚀 竞潮玩实时数据看板 🚀")
-    print(f"\n      ➡️   http://0.0.0.0:7860")
+    print(f"\n      ➡️   [http://0.0.0.0:7860](http://0.0.0.0:7860)")
     print("="*60 + "\n")
     uvicorn.run(app, host="0.0.0.0", port=7860)
