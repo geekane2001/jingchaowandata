@@ -62,26 +62,36 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
         
         data = json.loads(raw_content)
 
-        # ============== START: CORE BUG FIX ==============
-        # 过滤掉 metrics 中 value 字段不是有效数字的项
+        # ============== START: 核心Bug修复代码 ==============
+        # 增加对模型返回的 metrics 列表进行校验和过滤的逻辑
         if "metrics" in data and isinstance(data["metrics"], list):
             valid_metrics = []
             for metric in data["metrics"]:
-                value_str = metric.get("value", "")
-                # 尝试从字符串中提取数字部分
+                # 获取 value 字段，确保为字符串
+                value_str = str(metric.get("value", ""))
+                
+                # 尝试从字符串中提取所有数字和小数点
                 numeric_part = "".join(filter(lambda x: x in '0123456789.', value_str))
+                
+                # 检查提取出的部分是否是一个有效的数字
+                # 必须含有数字，且不能只是一个小数点
                 if numeric_part and numeric_part != '.':
                     try:
-                        # 确认可以被成功解析为浮点数
+                        # 最终确认可以被成功解析为浮点数
                         float(numeric_part)
+                        # 如果所有检查都通过，则这是一个有效的指标
                         valid_metrics.append(metric)
                     except ValueError:
-                        logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不是有效数字。")
+                        # 如果不能转换为float（例如 "1.2.3"），则是无效的
+                        logging.warning(f"过滤无效指标: {metric.get('name')} 的值 '{value_str}' 包含无效数字格式。")
                         continue
                 else:
-                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字。")
+                    # 如果值不包含任何数字 (例如 "N/A", "无法识别")
+                    logging.warning(f"过滤无效指标: {metric.get('name')} 的值 '{value_str}' 不含任何数字。")
+            
+            # 用清洗过的、有效的指标列表替换原始列表
             data["metrics"] = valid_metrics
-        # ============== END: CORE BUG FIX ==============
+        # ============== END: 核心Bug修复代码 ==============
 
         return data
     except Exception as e:
