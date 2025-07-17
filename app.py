@@ -18,12 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - 
 
 COOKIE_FILE = '来客.json'
 TARGET_URL = "https://www.life-data.cn/?channel_id=laike_data_first_menu&groupid=1768205901316096"
-# ============== START: 新增与修改 ==============
-# 不再需要固定的截图路径，改为动态生成
-# SCREENSHOT_PATH = "dashboard_screenshot.png" 
-# 定义用于存放所有调试截图的文件夹
 DEBUG_SCREENSHOTS_DIR = Path("debug_screenshots")
-# ============== END: 新增与修改 ==============
 REFRESH_INTERVAL_SECONDS = 10
 
 client = AsyncOpenAI(
@@ -34,16 +29,27 @@ MODEL_ID = 'Qwen/Qwen2.5-VL-72B-Instruct'
 
 app_state = {"latest_data": None, "status": "Initializing..."}
 
+# ============== START: 核心提示词优化 ==============
 def get_detailed_prompt():
     return """
-    你是一个专业的数据分析师。请分析这张仪表盘截图，并提取所有关键指标卡片的信息。
-    严格按照以下JSON格式返回，不要添加任何额外的解释或Markdown标记。
+    你是一个极其严谨细致的数据提取助手。请分析这张仪表盘截图，并提取所有关键指标卡片的信息。
+
+    你的回答必须是也只能是一个严格的JSON对象，不要添加任何额外的解释或Markdown标记。
+    必须严格遵循以下JSON格式：
     { "update_time": "...", "comparison_date": "...", "metrics": [ { "name": "...", "value": "...", "comparison": "...", "status": "..." } ] }
-    请确保：
-    1. **只提取以下指标**：成交金额、核销金额、商品访问人数、核销券数。
-    2. **忽略“退款金额”** 以及其他所有未列出的指标。
-    3. 所有字段都从图片中准确提取。
+
+    **至关重要的指令：**
+
+    1.  **目标指标**: 只提取以下四个指标：`成交金额`、`核销金额`、`商品访问人数`、`核销券数`。
+    2.  **数据准确性是最高优先级**:
+        * **如果某个指标的数值在图片中清晰可见，请准确提取。**
+        * **如果某个指标的数值看不见、被遮挡、或者其区域正在加载中（例如显示空白或加载动画），你必须为该指标的 `value` 字段返回一个空字符串 `""`。**
+        * **在任何情况下，都绝对不允许猜测、估算、编造或补全任何数字。宁愿留空，也不能出错。**
+        * **错误示例**: 图片中“核销券数”未加载，返回 `{"name": "核销券数", "value": "1234", ...}` -> 这是错误的！
+        * **正确示例**: 图片中“核销券数”未加载，应返回 `{"name": "核销券数", "value": "", "comparison": "", "status": ""}`。
+    3.  **忽略其他**: 忽略 “退款金额” 以及任何其他未在目标列表中指定的指标。
     """
+# ============== END: 核心提示词优化 ==============
 
 def encode_image_to_base64(image_path: str) -> str:
     try:
@@ -84,7 +90,7 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
                         logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不是有效数字。")
                         continue
                 else:
-                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字。")
+                    logging.warning(f"过滤无效指标: {metric['name']} 的值 '{value_str}' 不含数字或为空。")
             data["metrics"] = valid_metrics
 
         return data
@@ -93,11 +99,8 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
         return {}
 
 async def run_playwright_scraper():
-    # ============== START: 新增与修改 ==============
-    # 程序启动时，确保调试截图文件夹存在
     DEBUG_SCREENSHOTS_DIR.mkdir(exist_ok=True)
     logging.info(f"调试截图将保存在: '{DEBUG_SCREENSHOTS_DIR.resolve()}'")
-    # ============== END: 新增与修改 ==============
 
     if not os.path.exists(COOKIE_FILE):
         app_state["status"] = f"错误: Cookie 文件 '{COOKIE_FILE}' 未找到。"
@@ -131,18 +134,13 @@ async def run_playwright_scraper():
                 logging.info("关键元素已找到，数据已渲染。")
                 await asyncio.sleep(2)
 
-                # ============== START: 核心功能修改 ==============
-                # 1. 生成带时间戳的唯一文件名
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 screenshot_path = DEBUG_SCREENSHOTS_DIR / f"screenshot_{timestamp}.png"
 
-                # 2. 打印日志，告知用户当前截图的文件名
                 logging.info(f"正在截取屏幕到: {screenshot_path}")
                 await page.screenshot(path=screenshot_path, full_page=True)
                 
-                # 3. 使用新生成的截图路径进行后续操作
                 image_base64 = encode_image_to_base64(str(screenshot_path))
-                # ============== END: 核心功能修改 ==============
                 
                 if image_base64:
                     logging.info("截图成功，正在发送给AI进行分析...")
