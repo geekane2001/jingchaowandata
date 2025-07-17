@@ -4,6 +4,8 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -16,7 +18,12 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - [%(levelname)s] - 
 
 COOKIE_FILE = '来客.json'
 TARGET_URL = "https://www.life-data.cn/?channel_id=laike_data_first_menu&groupid=1768205901316096"
-SCREENSHOT_PATH = "dashboard_screenshot.png"
+# ============== START: 新增与修改 ==============
+# 不再需要固定的截图路径，改为动态生成
+# SCREENSHOT_PATH = "dashboard_screenshot.png" 
+# 定义用于存放所有调试截图的文件夹
+DEBUG_SCREENSHOTS_DIR = Path("debug_screenshots")
+# ============== END: 新增与修改 ==============
 REFRESH_INTERVAL_SECONDS = 10
 
 client = AsyncOpenAI(
@@ -58,17 +65,12 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
             }]
         )
         raw_content = response.choices[0].message.content
-        
-        # ============== START: 核心调试代码 ==============
-        # 打印从 VLM API 收到的最原始的、未经处理的字符串
         logging.info(f"VLM 原始返回内容: {raw_content}")
-        # ============== END: 核心调试代码 ==============
 
         if raw_content.startswith("```json"): raw_content = raw_content[7:-3].strip()
         
         data = json.loads(raw_content)
 
-        # 保留之前的Bug修复代码，作为第二道防线
         if "metrics" in data and isinstance(data["metrics"], list):
             valid_metrics = []
             for metric in data["metrics"]:
@@ -91,6 +93,12 @@ async def analyze_image_with_vlm(image_base64: str) -> dict:
         return {}
 
 async def run_playwright_scraper():
+    # ============== START: 新增与修改 ==============
+    # 程序启动时，确保调试截图文件夹存在
+    DEBUG_SCREENSHOTS_DIR.mkdir(exist_ok=True)
+    logging.info(f"调试截图将保存在: '{DEBUG_SCREENSHOTS_DIR.resolve()}'")
+    # ============== END: 新增与修改 ==============
+
     if not os.path.exists(COOKIE_FILE):
         app_state["status"] = f"错误: Cookie 文件 '{COOKIE_FILE}' 未找到。"
         logging.error(app_state["status"])
@@ -123,10 +131,19 @@ async def run_playwright_scraper():
                 logging.info("关键元素已找到，数据已渲染。")
                 await asyncio.sleep(2)
 
-                logging.info("正在截取屏幕...")
-                await page.screenshot(path=SCREENSHOT_PATH, full_page=True)
+                # ============== START: 核心功能修改 ==============
+                # 1. 生成带时间戳的唯一文件名
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                screenshot_path = DEBUG_SCREENSHOTS_DIR / f"screenshot_{timestamp}.png"
+
+                # 2. 打印日志，告知用户当前截图的文件名
+                logging.info(f"正在截取屏幕到: {screenshot_path}")
+                await page.screenshot(path=screenshot_path, full_page=True)
                 
-                image_base64 = encode_image_to_base64(SCREENSHOT_PATH)
+                # 3. 使用新生成的截图路径进行后续操作
+                image_base64 = encode_image_to_base64(str(screenshot_path))
+                # ============== END: 核心功能修改 ==============
+                
                 if image_base64:
                     logging.info("截图成功，正在发送给AI进行分析...")
                     analysis_result = await analyze_image_with_vlm(image_base64)
